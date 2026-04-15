@@ -23,6 +23,68 @@ The system never touches money directly. It is purely record-keeping and decisio
 
 ---
 
+## How it works end to end
+
+### Phase 1 — Admin setup (done once per product or partner)
+
+Before any borrower can apply for financing, an admin must configure the system:
+
+1. **Create a product** (`POST /api/v1/products`)
+   The admin defines a financing type — interest rate, term limits, loan amount range, origination fee, and eligibility rules (minimum credit score, maximum DTI, allowed states, etc.). Products are reusable and shared across partners.
+
+2. **Create a partner** (`POST /api/v1/partners`)
+   The admin registers a business that will offer financing to their customers. The system issues an API key the partner will use to authenticate.
+
+3. **Assign the product to the partner** (`POST /api/v1/partners/{id}/products`)
+   This creates a `PartnerProduct` record authorizing the partner to offer that product. Optionally, the admin can set a rate or fee override specific to that partner. A partner can only offer products they have been explicitly assigned.
+
+---
+
+### Phase 2 — Partner onboards a borrower
+
+When a customer wants to apply for financing through a partner's app or website:
+
+4. **Create a borrower** (`POST /api/v1/borrowers`)
+   The partner submits the customer's identity and contact details. The system stores only the last 4 digits of the SSN and a hash — never the full number.
+
+5. **Add a payment method** (`POST /api/v1/borrowers/{id}/payment-methods`)
+   The partner supplies a processor token (from Stripe, Braintree, etc.) representing the customer's payment instrument. Raw card or bank details are never sent to or stored by this system.
+
+---
+
+### Phase 3 — Loan application and decisioning
+
+6. **Submit an application** (`POST /api/v1/applications`)
+   The partner submits an application specifying the borrower, product, requested amount, and term. The system immediately:
+   - Verifies the partner is authorized to offer the selected product
+   - Resolves the effective interest rate and fees (partner override if set, otherwise product defaults)
+   - Pulls a credit report from the credit bureau integration
+   - Runs the underwriting rules engine against the product's eligibility rules
+   - Returns an **instant APPROVED or DECLINED decision** — no waiting
+
+7. **If approved — loan is originated automatically**
+   On approval, the system creates a `Loan` record, generates the full amortization schedule, and writes a disbursement ledger entry. The response includes the `loan_id`, approved amount, rate, term, and monthly payment.
+
+8. **If declined — reasons are returned**
+   The response includes the specific decline reasons (e.g. `credit_score_below_minimum`, `dti_exceeds_maximum`). No loan is created.
+
+> A borrower can only apply for products that their partner has been assigned. There is no cross-partner product shopping.
+
+---
+
+### Phase 4 — Loan servicing and repayment
+
+9. **Borrower makes payments**
+   The external payment processor charges the borrower's payment method and sends a settlement notification to `POST /api/v1/webhooks/payments`. This system never initiates charges.
+
+10. **Payment is applied to the loan**
+    On receiving the webhook, the system logs the raw event, applies the payment (splitting it into principal, interest, and fees), reduces the outstanding balance, and writes a ledger entry. Duplicate notifications from the processor are safely rejected using the `external_event_id` as an idempotency key.
+
+11. **Final payment — loan closes**
+    When a payment reduces the outstanding balance to zero, the loan status is set to `PAID_OFF` and `next_due_date` is cleared.
+
+---
+
 ## Key concepts
 
 ### Products

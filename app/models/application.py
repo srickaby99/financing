@@ -3,7 +3,8 @@ from datetime import datetime
 from enum import StrEnum
 
 from sqlalchemy import DateTime, ForeignKey, Numeric, SmallInteger, String
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import UUID
+from app.db.types import DialectJSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
@@ -40,7 +41,7 @@ class LoanApplication(Base):
 
     # Stores the full underwriting decision: approved_amount, approved_rate,
     # approved_term, decline_reasons, credit_score, dti, etc.
-    underwriting_result: Mapped[dict | None] = mapped_column(JSONB)
+    underwriting_result: Mapped[dict | None] = mapped_column(DialectJSON)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

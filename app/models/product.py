@@ -2,10 +2,11 @@ import uuid
 from enum import StrEnum
 
 from sqlalchemy import Boolean, Numeric, SmallInteger, String, Text
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+from app.db.types import DialectJSON
 
 
 class ProductType(StrEnum):
@@ -42,13 +43,13 @@ class Product(Base):
 
     # Fees
     origination_fee: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False, default=0)
-    late_fee_rules: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    late_fee_rules: Mapped[dict] = mapped_column(DialectJSON, nullable=False, default=dict)
 
     collateral_required: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     # Flexible per-product underwriting rules evaluated by the rules engine
     # e.g. {"min_credit_score": 600, "max_dti": 0.45, "allowed_states": ["CA", "TX"]}
-    eligibility_rules: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    eligibility_rules: Mapped[dict] = mapped_column(DialectJSON, nullable=False, default=dict)
 
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 

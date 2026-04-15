@@ -3,7 +3,8 @@ from datetime import datetime
 from enum import StrEnum
 
 from sqlalchemy import DateTime, String, Text
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import UUID
+from app.db.types import DialectJSON
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
@@ -40,8 +41,8 @@ class AuditLog(Base):
     actor_id: Mapped[str | None] = mapped_column(String(36))              # partner.id, admin user id, etc.
 
     # State snapshot — both nullable so partial logging is valid
-    before: Mapped[dict | None] = mapped_column(JSONB)
-    after: Mapped[dict | None] = mapped_column(JSONB)
+    before: Mapped[dict | None] = mapped_column(DialectJSON)
+    after: Mapped[dict | None] = mapped_column(DialectJSON)
 
     # Optional free-text context (e.g. decline reason summary, error message)
     note: Mapped[str | None] = mapped_column(Text)

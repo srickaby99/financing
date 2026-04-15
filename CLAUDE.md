@@ -183,6 +183,10 @@ LedgerEntry  (append-only, double-entry)
   └── created_at
 ```
 
+### ERD
+
+The entity relationship diagram lives at [`docs/erd.md`](docs/erd.md). **Update it whenever a model in `app/models/` changes** — new tables, removed columns, new foreign keys, renamed fields. Never leave it out of sync with the code.
+
 ### Key design rules
 
 - **`Product.eligibility_rules`** is a JSONB field holding a rule set (e.g. min credit score, max DTI, allowed states). The `domain/underwriting.py` rules engine evaluates these against applicant data so product-specific rules require no code changes.

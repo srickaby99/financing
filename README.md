@@ -275,16 +275,26 @@ Interactive docs: `http://localhost:8000/docs`
 
 ## Testing
 
+### Automated tests
+
 Tests use SQLite in-memory — no database setup required.
 
 ```bash
 python -m pytest                         # all tests
 python -m pytest tests/services/ -v     # service layer only, verbose
+python -m pytest tests/scenarios/ -v    # end-to-end scenario tests
 python -m pytest -k "test_approval"     # single test by name
 python -m pytest --cov=app              # with coverage report
 ```
 
-**Current coverage: 82 tests across 7 service modules — all passing.**
+**Current coverage: 91 tests — all passing.**
+
+| Suite | Tests | What it covers |
+|---|---|---|
+| `tests/services/` | 82 | Service layer — one assertion per behaviour |
+| `tests/scenarios/` | 9 | Full HTTP flows with complete state snapshots |
+
+Service tests by module:
 
 | Module | Tests |
 |---|---|
@@ -295,6 +305,28 @@ python -m pytest --cov=app              # with coverage report
 | `audit_service` | 9 |
 | `borrower_service` | 10 |
 | `payment_service` | 7 |
+
+### User acceptance testing (UAT)
+
+The UAT scripts in `scripts/uat/` run against the **real PostgreSQL database** and create data you can inspect at each step before moving on. This is the human sign-off process — not automated CI.
+
+```bash
+python scripts/uat/step_1_create_product.py
+python scripts/uat/step_2_create_partner.py
+python scripts/uat/step_3_assign_product.py
+python scripts/uat/step_4_create_borrower.py
+python scripts/uat/step_5_submit_application.py
+python scripts/uat/step_6_make_payment.py
+python scripts/uat/step_7_full_payoff.py
+```
+
+Each script prints what it created and the psql queries to verify the database state. When done:
+
+```bash
+python scripts/uat/cleanup.py   # removes all UAT data, resets state file
+```
+
+See [`scripts/uat/README.md`](scripts/uat/README.md) for the full walkthrough including verify queries for every step.
 
 ---
 

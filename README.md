@@ -369,3 +369,4 @@ python -m ruff format .
 - **Real credit bureau integration** — the dummy client is the only implementation. Adding a real one (Experian, Equifax, etc.) means implementing `CreditBureauClient` and pointing `CREDIT_BUREAU_IMPL` at it.
 - **Background task queue** — currently everything is synchronous. Celery or similar can be wired in at `app/tasks/` when needed.
 - **Expanded auth** — the admin JWT endpoint validates against a single env-var key. A proper user store and role-based access control are the natural next step.
+- **Interest accrual at payment time** — the amortization schedule correctly calculates the principal/interest split per period, but when a payment arrives via webhook it is applied with `accrued_interest=0`, meaning the full payment amount reduces principal only. `payment.interest_applied` will always be `0.00` until interest accrual is tracked at servicing time and passed into the payment allocation logic in `app/tasks/payment_processing.py`.

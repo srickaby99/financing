@@ -29,3 +29,6 @@ Thumbs.db
 
 # Memory (local dev notes, not project code)
 memory/
+
+# UAT state file — contains live IDs from UAT runs, not for source control
+scripts/uat/uat_state.json

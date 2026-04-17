@@ -6,8 +6,13 @@ import os
 import sys
 from pathlib import Path
 
-# Ensure project root is importable regardless of working directory
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+# Resolve project root and change into it before any app imports.
+# pydantic-settings resolves .env relative to the working directory,
+# so this ensures it finds the right file whether the script is run
+# from the project root or from inside scripts/uat/.
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+os.chdir(PROJECT_ROOT)
+sys.path.insert(0, str(PROJECT_ROOT))
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
